@@ -1,1 +1,3 @@
-local/watch.log
+windows/watch.log
+mac/watch.log
+mac/launchd.err

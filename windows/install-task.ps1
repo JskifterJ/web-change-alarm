@@ -1,7 +1,7 @@
 # Registers a Windows scheduled task that runs watch.ps1 on the chosen days until -Until.
 #
 # Example (watch weekdays 07:00-08:30 up to and including 20 Nov 2026):
-#   powershell -ExecutionPolicy Bypass -File .\local\install-task.ps1 -Until 2026-11-20
+#   powershell -ExecutionPolicy Bypass -File .\windows\install-task.ps1 -Until 2026-11-20
 #
 # Remove it again with:
 #   Unregister-ScheduledTask -TaskName 'Web change alarm' -Confirm:$false

@@ -1,7 +1,7 @@
 # Web change alarm
 
 Watch a web page for a piece of text to **disappear** (e.g. *"sold out"*) or **appear**
-(e.g. *"Add to cart"*) and get a **loud looping alarm on your Windows PC** the moment it
+(e.g. *"Add to cart"*) and get a **loud looping alarm on your computer (Windows or Mac)** the moment it
 happens. The page also opens in your browser, so you can buy right away.
 
 It does **not** buy or click anything. It just tells you to go, fast.
@@ -22,43 +22,94 @@ tickets. It alarms when the sold-out notice disappears. To watch something else,
 
 **You always choose an end date.** After that date nothing runs.
 
-> **Constraint: local only, for now.** The watcher must run on your own Windows PC, switched
-> on and logged in during the watch hours. A cloud version (GitHub Actions checking the page
+> **Constraint: local only, for now.** The watcher must run on your own computer (Windows or Mac),
+> switched on and logged in during the watch hours. A cloud version (GitHub Actions checking the page
 > and sending an email) was tried and dropped: GitHub's shared scheduler is so overloaded that
 > scheduled runs start late or get skipped, and the alert often arrives after tickets are gone.
 > Until there's a reliable cloud option, the local alarm is the only viable way to use this.
 
 ---
 
-## Setup (Windows)
+Jump to: [Setup on Windows](#setup-on-windows) · [Setup on Mac](#setup-on-mac) ·
+[Watch a different page](#watch-a-different-page)
+
+## Setup on Windows
 
 1. Get the files: **Code → Download ZIP** (then unzip), or `git clone` this repo.
 2. Open PowerShell in the folder and test once. You should see the page state (`WAITING`)
    and hear 4 s of alarm:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\local\watch.ps1 -Test
+   powershell -ExecutionPolicy Bypass -File .\windows\watch.ps1 -Test
    ```
 3. Install the daily schedule with **your own end date** (last day to watch, `yyyy-MM-dd`):
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\local\install-task.ps1 -Until 2026-11-20
+   powershell -ExecutionPolicy Bypass -File .\windows\install-task.ps1 -Until 2026-11-20
    ```
    Default: **Monday–Friday, 07:00–08:30**, a check every 30 s, alarm at 20 % volume. Change any of it:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\local\install-task.ps1 -Until 2026-11-20 `
+   powershell -ExecutionPolicy Bypass -File .\windows\install-task.ps1 -Until 2026-11-20 `
        -StartTime 06:45 -EndTime 09:00 -Days Monday,Wednesday,Friday -AlarmVolume 0.6
    ```
    Running the installer again replaces the previous schedule.
 
 When the page changes, it opens in your browser and the alarm loops until you press a key
 in the watcher window. Your PC must be on and you must be logged in (it can wake from sleep,
-not from shutdown). Each check is logged in `local\watch.log`.
+not from shutdown). Each check is logged in `windows\watch.log`.
 
-Watch right now without a schedule: `.\local\watch.ps1 -EndTime 22:00`
+Watch right now without a schedule: `.\windows\watch.ps1 -EndTime 22:00`
 
 Remove the schedule:
 ```powershell
 Unregister-ScheduledTask -TaskName 'Web change alarm' -Confirm:$false
 ```
+
+## Setup on Mac
+
+Uses only what ships with macOS (Terminal, `curl`, `perl`, `launchd`). Nothing to install.
+
+1. Get the files: **Code → Download ZIP**. Then **move the unzipped folder into your home
+   folder** (the one with your name, next to Desktop/Documents) and rename it
+   `web-change-alarm`. macOS doesn't let scheduled jobs run from Desktop, Documents,
+   Downloads or iCloud Drive, so leaving it in one of those won't work. The installer
+   will tell you if it is in the wrong place.
+   Or clone it straight there: `git clone https://github.com/JskifterJ/web-change-alarm.git ~/web-change-alarm`
+2. Open **Terminal** (Spotlight: ⌘ Space → "Terminal") and go to the folder:
+   ```bash
+   cd ~/web-change-alarm
+   ```
+3. Test once. You should see the page state (`WAITING`) and hear 4 s of alarm:
+   ```bash
+   bash mac/watch.sh --test
+   ```
+4. Install the daily schedule with **your own end date** (last day to watch, `YYYY-MM-DD`):
+   ```bash
+   bash mac/install.sh --until 2026-11-20
+   ```
+   Default: **Monday–Friday, 07:00–08:30**, a check every 30 s, alarm at 20 % volume. Change any of it:
+   ```bash
+   bash mac/install.sh --until 2026-11-20 --start-time 06:45 --end-time 09:00 --days Mon,Wed,Fri --volume 0.6
+   ```
+   Running the installer again replaces the previous schedule.
+
+When the page changes, it opens in your browser, shows a notification and plays a looping
+alarm until you click **Stop alarm** in the dialog that pops up. Each check is logged in
+`mac/watch.log`.
+
+Your Mac must be **on, logged in, and awake or asleep with the lid open**. A missed start (asleep
+at 07:00) runs as soon as the Mac wakes. A closed lid on a laptop without an external screen
+means no checks. To wake the Mac yourself just before the start time, run this once (it asks
+for your password):
+```bash
+sudo pmset repeat wake MTWRF 06:58:00        # undo later with: sudo pmset repeat cancel
+```
+
+Watch right now without a schedule: `bash mac/watch.sh --end-time 22:00`
+
+Remove the schedule: `bash mac/uninstall.sh`
+
+> The first alarm may make macOS ask whether Terminal / `osascript` may control the volume or
+> show notifications. Click **Allow**. Running `bash mac/watch.sh --test` once beforehand gets
+> those prompts out of the way.
 
 ## Watch a different page
 
@@ -95,7 +146,7 @@ Everything about *what* to watch is in [`config.json`](config.json):
    `<span style="color: #e03e2d;">Le quota de forfait pour aujourd&#039;hui a été vendu (13.11.26)</span>`.
    The date changes every day, so the pattern must not include it.
 3. **Check the watcher sees it too.** The watcher downloads the raw HTML and does not run
-   JavaScript. Press **Ctrl+U** (view source) and **Ctrl+F** for your text. If it's in the
+   JavaScript. Press **Ctrl+U** (Mac: **⌥⌘U**) to view the source and **Ctrl+F** for your text. If it's in the
    source, you're good. If it only appears in *Inspect* but not in *view source*, the
    site builds it with JavaScript and this tool can't see it. Choose different text, or this
    page isn't a fit.
@@ -108,12 +159,13 @@ Everything about *what* to watch is in [`config.json`](config.json):
 6. **Add `mustContain` safety checks** that are on the page in *both* states: the product
    name and a CSS class of the main layout (`box__intro`, found in Inspect). In JSON, `"`
    inside a string is written `\"` and a regex `\` is written `\\`.
-7. **Test**: `.\local\watch.ps1 -Test` should print `WAITING`. Briefly swap `alertWhen`
+7. **Test**: `.\windows\watch.ps1 -Test` (Mac: `bash mac/watch.sh --test`) should print `WAITING`. Briefly swap `alertWhen`
    to the other value and run it again. It should print `TRIGGERED`. `ERROR` means a
    `mustContain` check didn't match or the page didn't load.
 
-Keep your regexes simple (plain text, `(?i)`, `[^<]*`, `\s+`, `\d+`). They are .NET
-regular expressions, and [regex101.com](https://regex101.com/) (flavor ".NET") is handy for trying them out.
+Keep your regexes simple (plain text, `(?i)`, `[^<]*`, `\s+`, `\d+`). Windows reads them
+as .NET regular expressions and the Mac as Perl ones, which agree on all of these.
+[regex101.com](https://regex101.com/) is handy for trying them out.
 
 ### Watching the English page instead
 
@@ -134,8 +186,11 @@ Note the product name differs too: *St. Nicholas Express* in English, *Saint-Nic
 French. Each language is a separately translated text on the site, so if the shop updates one
 language before the other, the two can briefly disagree.
 
-Want to watch several pages? Make a copy of `config.json` and run the local watcher with
-`-Config .\other.json` (and `install-task.ps1 -Config .\other.json -TaskName 'Other alarm'`).
+Want to watch several pages? Make a copy of `config.json` and point a second schedule at it:
+
+- Windows: `install-task.ps1 -Until ... -Config .\other.json -TaskName 'Other alarm'`
+- Mac: `bash mac/install.sh --until ... --config other.json --label com.webchangealarm.other`
+  (remove it with `bash mac/uninstall.sh com.webchangealarm.other`)
 
 ## Good manners
 
