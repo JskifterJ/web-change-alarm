@@ -16,6 +16,7 @@ foreach ($k in 'name', 'url', 'watchFor', 'alertWhen') {
 }
 if ($cfg.alertWhen -notin 'gone', 'appears') { throw "config.json: 'alertWhen' must be 'gone' or 'appears'." }
 $MustContain = @($cfg.mustContain | Where-Object { $_ })
+$OpenUrl = if ($cfg.openUrl) { $cfg.openUrl } else { $cfg.url }   # page opened in the browser on alarm
 
 $UA  = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
 $AlarmWav = 'C:\Windows\Media\Alarm01.wav'
@@ -140,7 +141,7 @@ while ((Get-Date) -lt $end) {
         Start-Sleep -Seconds 3
         if ((Get-PageState) -eq 'TRIGGERED') {   # confirm, to rule out a half-loaded page
             Log 'ALARM: the page changed'
-            Start-Process $cfg.url
+            Start-Process $OpenUrl
             Start-Alarm
             break
         }

@@ -8,8 +8,17 @@ It does **not** buy or click anything. It just tells you to go, fast.
 
 The repo comes set up with a real example: the sold-out
 [Verbier Opening Session + Saint-Nicolas Express](https://verbier4vallees.ch/fr/shop-en-ligne/activites/opening-session-saint-nicolas-express_activity_426820)
-tickets. It alarms when the notice *"quota de forfait … vendu"* disappears. To watch something
-else, see [Watch a different page](#watch-a-different-page).
+tickets. It alarms when the sold-out notice disappears. To watch something else, see
+[Watch a different page](#watch-a-different-page).
+
+> **English or French page?** You'll probably browse the
+> [English page](https://verbier4vallees.ch/en/online-shop/activities/opening-session-st.nicholas-express_activity_426820),
+> where the notice reads *"Today's ski pass quota has been sold out (13/11/26)"*. The watcher
+> checks the **French** page instead, where the same notice reads *"Le quota de forfait pour
+> aujourd'hui a été vendu (13.11.26)"*. French is the site's default language, so it's the safest
+> one to watch. Both notices carry the same date, and when the alarm goes off it opens the
+> **English** page for you. Prefer to watch the English text directly? See
+> [Watching the English page instead](#watching-the-english-page-instead).
 
 **You always choose an end date.** After that date nothing runs.
 
@@ -59,6 +68,7 @@ Everything about *what* to watch is in [`config.json`](config.json):
 {
   "name": "Verbier Opening Session + Saint-Nicolas Express",
   "url": "https://verbier4vallees.ch/fr/shop-en-ligne/activites/opening-session-saint-nicolas-express_activity_426820",
+  "openUrl": "https://verbier4vallees.ch/en/online-shop/activities/opening-session-st.nicholas-express_activity_426820",
   "mustContain": [
     "box__intro",
     "\"name\": \"Opening Session \\+ Saint-Nicolas Express"
@@ -72,6 +82,7 @@ Everything about *what* to watch is in [`config.json`](config.json):
 |---|---|
 | `name` | Label shown in the alarm window and the log. |
 | `url` | The page to check. |
+| `openUrl` | *(optional)* The page to open in your browser when the alarm goes off, e.g. another language version of the same page. Defaults to `url`. |
 | `watchFor` | The text (a [regular expression](https://regex101.com/)) whose change you care about. |
 | `alertWhen` | `"gone"`: alert when `watchFor` **disappears** (sold-out banner, "coming soon"…). `"appears"`: alert when it **shows up** ("Add to cart", a new date, a price…). |
 | `mustContain` | Safety checks: text that is always on the real page. If any is missing, the check counts as an *error*, not an alarm. This stops a maintenance or error page from setting off a false alarm. |
@@ -79,8 +90,8 @@ Everything about *what* to watch is in [`config.json`](config.json):
 ### How to pick the element to track, step by step (the Verbier example)
 
 1. **Open the page** in Chrome/Edge/Firefox while it is in the "before" state (sold out).
-2. **Find the element** that will change: here the red notice *"Le quota de forfait pour
-   aujourd'hui a été vendu (13.11.26)"*. Right-click it → **Inspect**. The developer tools show its HTML:
+2. **Find the element** that will change: here the red notice. On the French page it reads *"Le quota de forfait pour
+   aujourd'hui a été vendu (13.11.26)"*, and on the English page *"Today's ski pass quota has been sold out (13/11/26)"*. Right-click it → **Inspect**. The developer tools show its HTML:
    `<span style="color: #e03e2d;">Le quota de forfait pour aujourd&#039;hui a été vendu (13.11.26)</span>`.
    The date changes every day, so the pattern must not include it.
 3. **Check the watcher sees it too.** The watcher downloads the raw HTML and does not run
@@ -103,6 +114,25 @@ Everything about *what* to watch is in [`config.json`](config.json):
 
 Keep your regexes simple (plain text, `(?i)`, `[^<]*`, `\s+`, `\d+`). They are .NET
 regular expressions, and [regex101.com](https://regex101.com/) (flavor ".NET") is handy for trying them out.
+
+### Watching the English page instead
+
+If you'd rather track the text you actually see in English, replace these fields in `config.json`
+(and then run the test from step 7):
+
+```json
+  "url": "https://verbier4vallees.ch/en/online-shop/activities/opening-session-st.nicholas-express_activity_426820",
+  "openUrl": "",
+  "mustContain": [
+    "box__intro",
+    "\"name\": \"Opening Session \\+ St\\. Nicholas Express"
+  ],
+  "watchFor": "(?i)ski pass quota[^<]*sold out",
+```
+
+Note the product name differs too: *St. Nicholas Express* in English, *Saint-Nicolas Express* in
+French. Each language is a separately translated text on the site, so if the shop updates one
+language before the other, the two can briefly disagree.
 
 Want to watch several pages? Make a copy of `config.json` and run the local watcher with
 `-Config .\other.json` (and `install-task.ps1 -Config .\other.json -TaskName 'Other alarm'`).

@@ -1,6 +1,7 @@
 {
   "name": "Verbier Opening Session + Saint-Nicolas Express",
   "url": "https://verbier4vallees.ch/fr/shop-en-ligne/activites/opening-session-saint-nicolas-express_activity_426820",
+  "openUrl": "https://verbier4vallees.ch/en/online-shop/activities/opening-session-st.nicholas-express_activity_426820",
   "mustContain": [
     "box__intro",
     "\"name\": \"Opening Session \\+ Saint-Nicolas Express"
