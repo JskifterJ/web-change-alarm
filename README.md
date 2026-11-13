@@ -1,10 +1,8 @@
 # Web change alarm
 
 Watch a web page for a piece of text to **disappear** (e.g. *"sold out"*) or **appear**
-(e.g. *"Add to cart"*) and get alerted the moment it happens:
-
-- **Local alarm (Windows):** a loud looping alarm that also opens the page in your browser.
-- **Cloud email (GitHub Actions):** a GitHub issue, which reaches you as an email or GitHub app notification, with nothing running at home.
+(e.g. *"Add to cart"*) and get a **loud looping alarm on your Windows PC** the moment it
+happens. The page also opens in your browser, so you can buy right away.
 
 It does **not** buy or click anything. It just tells you to go, fast.
 
@@ -15,15 +13,15 @@ else, see [Watch a different page](#watch-a-different-page).
 
 **You always choose an end date.** After that date nothing runs.
 
-| | Local alarm (Windows) | Cloud email (GitHub Actions) |
-|---|---|---|
-| Alert | Loud alarm + opens the page | Issue → email / GitHub app push |
-| Needs | Your PC on and logged in | A free GitHub account |
-| Speed | Every 30 s (default) | Every 45 s, email can lag a minute |
+> **Constraint: local only, for now.** The watcher must run on your own Windows PC, switched
+> on and logged in during the watch hours. A cloud version (GitHub Actions checking the page
+> and sending an email) was tried and dropped: GitHub's shared scheduler is so overloaded that
+> scheduled runs start late or get skipped, and the alert often arrives after tickets are gone.
+> Until there's a reliable cloud option, the local alarm is the only viable way to use this.
 
 ---
 
-## Option 1: Local alarm on Windows
+## Setup (Windows)
 
 1. Get the files: **Code → Download ZIP** (then unzip), or `git clone` this repo.
 2. Open PowerShell in the folder and test once. You should see the page state (`WAITING`)
@@ -53,24 +51,6 @@ Remove the schedule:
 Unregister-ScheduledTask -TaskName 'Web change alarm' -Confirm:$false
 ```
 
-## Option 2: Email alert via GitHub Actions
-
-1. Click **Use this template → Create a new repository** (private is fine).
-2. In your new repo: **Settings → Secrets and variables → Actions → Variables → New repository variable**:
-   - `WATCH_UNTIL`: **required**, last day to watch, e.g. `2026-11-20`. Without it nothing runs.
-   - Optional: `WINDOW_START` (default `06:30`), `WINDOW_END` (default `08:30`), `INTERVAL`
-     (seconds, default `45`). Times are Swiss time (Europe/Zurich). `WINDOW_START` must be after ~05:20.
-3. Test it: **Actions → Web change alarm → Run workflow**, mode `test`. You should get an
-   issue (and an email) within a minute or two.
-4. Make sure GitHub can reach you: profile **Settings → Notifications**. Turn on email and/or
-   the GitHub mobile app, so you get a push notification instead of only an email.
-
-It then runs every weekday morning on its own (Mon–Fri, edit the `cron` lines in
-`.github/workflows/watch.yml` for other days) and stops after `WATCH_UNTIL`. To stop early,
-delete the variable or **Actions → Web change alarm → ⋯ → Disable workflow**.
-
----
-
 ## Watch a different page
 
 Everything about *what* to watch is in [`config.json`](config.json):
@@ -90,7 +70,7 @@ Everything about *what* to watch is in [`config.json`](config.json):
 
 | Field | Meaning |
 |---|---|
-| `name` | Label used in the alarm window and email titles. |
+| `name` | Label shown in the alarm window and the log. |
 | `url` | The page to check. |
 | `watchFor` | The text (a [regular expression](https://regex101.com/)) whose change you care about. |
 | `alertWhen` | `"gone"`: alert when `watchFor` **disappears** (sold-out banner, "coming soon"…). `"appears"`: alert when it **shows up** ("Add to cart", a new date, a price…). |
@@ -121,8 +101,8 @@ Everything about *what* to watch is in [`config.json`](config.json):
    to the other value and run it again. It should print `TRIGGERED`. `ERROR` means a
    `mustContain` check didn't match or the page didn't load.
 
-Keep your regexes simple (plain text, `(?i)`, `[^<]*`, `\s+`, `\d+`). The local watcher
-(.NET) and the cloud watcher (`grep -P`) both understand those the same way.
+Keep your regexes simple (plain text, `(?i)`, `[^<]*`, `\s+`, `\d+`). They are .NET
+regular expressions, and [regex101.com](https://regex101.com/) (flavor ".NET") is handy for trying them out.
 
 Want to watch several pages? Make a copy of `config.json` and run the local watcher with
 `-Config .\other.json` (and `install-task.ps1 -Config .\other.json -TaskName 'Other alarm'`).
